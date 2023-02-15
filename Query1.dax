@@ -1,0 +1,21 @@
+﻿define 
+var count_by_yearly_income = GROUPBY(DimCustomer,[YearlyIncome],"@Count_by_yearly_income",COUNTX(CURRENTGROUP(),[CustomerKey]))
+
+var list_pk = 
+ADDCOLUMNS(
+        SUMMARIZE('FactInternetSales','DimCustomer'[Interval_Yearly_Income],[CustomerKey]),
+        "@Sale_Amount",CALCULATE(SUMX('FactInternetSales',[SalesAmount]))
+    )
+
+var tb_rev_per_prd = 
+ADDCOLUMNS(
+    SUMMARIZE(DimProduct,DimProductCategory[EnglishProductCategoryName],[ProductKey]),
+    "@Rev_by_Prd", [Revenue_STC]+[Revenue_STR]
+)
+
+var no_blank = FILTER(tb_rev_per_prd,Not(ISBLANK([@Rev_by_Prd])))
+    
+EVALUATE count_by_yearly_income ORDER BY [YearlyIncome] asc
+EVALUATE tb_rev_per_prd
+EVALUATE no_blank
+EVALUATE GROUPBY(no_blank,[EnglishProductCategoryName],"@Rev_by_Cat",SUMX(CURRENTGROUP(),[@Rev_by_Prd]))

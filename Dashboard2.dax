@@ -1,0 +1,25 @@
+﻿DEFINE
+var current_city = max(DimGeography[City])
+
+var STR_by_city = 
+	CALCULATETABLE(
+    ADDCOLUMNS(
+        SUMMARIZE('FactResellerSales',DimGeography[City]),
+        "@Rev", [Revenue_STR]
+    	),
+    DimGeography[CountryRegionCode] = "US"
+    )
+
+var filter_top5 = TOPN(5,STR_by_city,[@Rev],DESC)
+
+var result = CALCULATE(SUMX(filter_top5,[@Rev]), [City] in VALUES(DimGeography[City]))
+
+
+EVALUATE {CALCULATE(
+			DISTINCTCOUNT(FactResellerSales[ResellerKey]),
+			ALL(DimGeography[CountryRegionCode])
+			)}
+			
+EVALUATE STR_by_city
+
+EVALUATE filter_top5
